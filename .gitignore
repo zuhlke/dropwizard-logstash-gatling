@@ -17,6 +17,8 @@ cache
 *.classpath
 *.settings
 
+.gradle
+
 gattling/gatling-charts-highcharts-1.5.3-bundle.zip
 gattling/gatling-charts-highcharts-1.5.3/*
 

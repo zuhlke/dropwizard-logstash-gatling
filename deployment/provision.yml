@@ -1,0 +1,45 @@
+---
+- hosts: all
+  vars_files:
+    - vars.yml
+  sudo: yes
+
+  tasks:
+  - name: Update APT packages.
+    apt: update_cache=yes
+
+  - name: Upgrade the Server.
+    apt: upgrade=full
+
+  - name: Create the project directory.
+    file: state=directory path={{ project_root }}
+  
+  - name: Create user.
+    user: home="{{ project_root }}/home" name={{ project_user }} state=present
+
+  - name: Update the project directory.
+    file: group={{ project_user }} owner={{ project_user }} mode=755 state=directory path={{ project_root }}
+
+  - name: Create the code directory.
+    file: group={{ project_user }} owner={{ project_user }} mode=755 state=directory path="{{ project_root }}/code/"
+
+  - name: Install required system packages.
+    apt: pkg={{item}} state=installed update-cache=yes
+    with_items: ${system_packages}
+    notify: restart ntpd 
+
+  - name: Create the SSH directory.
+    file: state=directory path="{{ project_root }}/home/.ssh/"
+
+  - name: Upload SSH key.
+    copy: src=keys/id_rsa dest="{{ project_root }}/home/.ssh/id_rsa" mode=0600
+    copy: src=keys/id_rsa.pub dest="{{ project_root }}/home/.ssh/id_rsa.pub" mode=0644
+
+  - name: Change permissions.
+    shell: chown -R {{ project_user }}:{{ project_user }} {{ project_root }}
+
+  handlers:
+    - include: handlers.yml
+
+- include: deploy.yml
+ 

@@ -1,0 +1,10 @@
+---
+project_name: HelloWorld
+project_root: /opt/HelloWorld
+project_user: zuhlke
+
+system_packages:
+  - git
+  - ntp
+  - nginx
+  - openjdk-7-jdk
