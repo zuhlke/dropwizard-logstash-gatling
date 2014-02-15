@@ -1,0 +1,94 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:0.8'
+  }
+}
+apply plugin: 'shadow'
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+group = 'com.toastshaman'
+version = currentVersion
+mainClassName = 'com.toastshaman.dropwizard.HelloWorldService'
+
+repositories {
+  mavenCentral()
+}
+
+project.ext {
+  dropwizardVersion = '0.6.2'
+}
+
+dependencies {
+  compile 'com.yammer.dropwizard:dropwizard-core:' + dropwizardVersion
+  compile 'com.yammer.dropwizard:dropwizard-auth:' + dropwizardVersion
+  compile 'com.yammer.dropwizard:dropwizard-client:' + dropwizardVersion
+
+  compile 'com.hubspot.dropwizard:dropwizard-guice:0.6.2'
+  compile 'net.gini.dropwizard:dropwizard-gelf:0.4.1'
+  compile 'org.apache.commons:commons-lang3:3.2.1'
+            
+  testCompile 'comm.yammer.dropwizard:dropwizard-testing:' + dropwizardVersion
+  testCompile 'org.hamcrest:hamcrest-all:1.3'
+}
+
+jar {
+  from sourceSets.main.allJava
+  manifest {
+    attributes 'Built-Date': new Date()
+    attributes 'Built-By': System.getProperty('user.name')
+    attributes 'Build-Jdk': System.getProperty('java.version')
+    attributes 'Implementation-Title': project.name
+    attributes 'Implementation-Version': project.version
+    attributes 'Implementation-Vendor-Id': project.group
+    attributes 'Main-Class' : mainClassName
+  }
+
+  // remove the security files (from mail.jar / activation.jar) so that the jar will be executable.
+  doFirst {
+    from (configurations.runtime.resolve().collect { it.isDirectory() ? it : zipTree(it) }) {
+      exclude 'META-INF/MANIFEST.MF'
+      exclude 'META-INF/*.SF'
+      exclude 'META-INF/*.DSA'
+      exclude 'META-INF/*.RSA'
+    }
+  }
+}
+
+shadow {
+  exclude 'META-INF/MANIFEST.MF'
+  exclude 'META-INF/*.SF'
+  exclude 'META-INF/*.DSA'
+  exclude 'META-INF/*.RSA'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+}
+
+run {
+  args 'server', './src/main/resources/hello-world.yml'
+}
+
+defaultTasks 'clean', 'build', 'test'
+
